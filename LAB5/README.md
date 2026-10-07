@@ -3,7 +3,7 @@
 Mon hoc: An toan va bao mat he thong thong tin
 Sinh vien: Ma Thi Thu Anh - 1150070001 - 11DH_TMDT 
 
-Tóm tắt toàn bộ:  ĐÃ HOÀN THÀNH 3 TÌNH HUỐNG 
+Tóm tắt toàn bộ:  ĐÃ HOÀN THÀNH 3 TÌNH HUỐNG(1-2-3) ; ĐÃ HOÀN THÀNH 2 TÌNH HUỐNG 4-5 (BỔ SUNG FILE MỚI LAB5P2)
 
 YOUTUBE : ĐÃ CẬP NHẬT VÀO WORD - HẲN 2 PHẦN LUÔN 
 
@@ -61,3 +61,31 @@ Bảng định tuyến (routes) sai → kiểm tra thấy route 10.0.0.0/8 qua L
 → Nguyên nhân thật sự: dùng Packet Capture (Diagnostics → Packet Capture) phát hiện gói ICMP từ DMZ có đến cổng pfSense nhưng không hề được chuyển tiếp sang LAN, và khi bật log cho rule Pass DMZ thì không hề có log nào (không Pass cũng không Block) — chứng tỏ gói bị rớt ở tầng thấp hơn cả bộ lọc firewall. Đây là lỗi kinh điển hardware checksum offload giữa pfSense (FreeBSD) và card mạng ảo của VMware (card ảo "hứa" sẽ tính checksum nhưng không tính kịp khi đi qua switch ảo, khiến FreeBSD coi gói là hỏng và âm thầm loại bỏ). → Cách khắc phục: System → Advanced → Networking → tích "Disable hardware checksum offload" → Save → Reboot pfSense. Sau khi khởi động lại, ping DMZ→LAN thành công ngay lập tức (0% packet loss).
 
 Bài học rút ra: khi pfSense "pass" được ở interface nguồn (thấy packet đến, interface counter tăng) nhưng traffic vẫn không tới được đích, nên nghi ngờ tầng thấp hơn firewall rule (driver/NIC ảo) chứ không chỉ loanh quanh sửa rule — dùng Packet Capture + bật log trên rule là cách xác định nhanh nhất traffic bị rớt ở đâu.
+
+Tình huống 4 — Port Forward WAN → DMZ
+Máy dùng: DMZ-Web = Metasploitable2 (172.16.0.2, có sẵn Apache ở port 80, dùng thay IIS). Domain Controller tắt được, không bắt buộc.
+
+Các bước thực hiện:
+Xác nhận DMZ-Web đang chạy web service: curl -s -o /dev/null -w "%{http_code}\n" http://localhost → trả về 200.
+Vào Interfaces → WAN, bỏ tích "Block private networks" và "Block bogon networks" (vì WAN của pfSense đang là IP private 192.168.x.x trong môi trường lab) → Save → Apply Changes.
+Tạo Firewall → NAT → Port Forward: Interface = WAN, Protocol = TCP, Destination = WAN address, Destination port range = 8080, Redirect target IP = 172.16.0.2, Redirect target port = 80 (HTTP), Filter rule association = Add associated filter rule → Save → Apply Changes.
+Lấy IP WAN hiện tại qua Status → Interfaces (ví dụ 192.168.2.186).
+Test từ máy thật (ngoài VMware, trên chính mạng WAN) — không test được từ máy ảo nằm trong LAN vì không có đường định tuyến tới mạng WAN: mở http://<IP-WAN>:8080.
+
+Kết quả: trang mặc định Metasploitable2 (Apache) hiện ra đầy đủ qua http://192.168.2.186:8080 — Port Forward hoạt động đúng.
+
+Khó khăn gặp phải:
+Sau khi khởi động lại máy, Metasploitable2 mất IP tĩnh (giống lỗi ở Tình huống 3) → phải gán lại ifconfig + route add default gw.
+Quên mật khẩu admin pfSense sau khi pfSense bị khởi động lại → dùng console VM, chọn option 3 "Reset webConfigurator password" để đặt lại mà không cần biết mật khẩu cũ.
+Lúc đầu test Port Forward từ máy ảo Windows (nằm trong LAN 10.0.0.x) nên bị ERR_CONNECTION_TIMED_OUT — phải test từ máy thật (laptop vật lý, nằm trên cùng mạng WAN 192.168.x.x) mới đúng.
+Tình huống 5 — Bật logging và đọc Firewall Log
+
+Các bước thực hiện:
+Vào Firewall → Rules → DMZ, Edit rule "Block DMZ to LAN" (rule đã tạo ở Tình huống 3) → tích "Log packets that are handled by this rule" → Save → Apply Changes.
+Tạo traffic chắc chắn bị chặn: từ Metasploitable2 (DMZ) ping lại 10.0.0.2 (LAN) → ping fail đúng như rule Block.
+Vào Status → System Logs → Firewall, cuộn xuống cuối trang tìm dòng log mới nhất.
+
+Kết quả: log hiện rõ 4 dòng:
+Block DMZ to LAN   172.16.0.2 → 10.0.0.2   (Action: ✗ Block)
+Xác nhận đúng rule nào đã chặn gói tin — chứng minh logging hoạt động và giúp xác định nguyên nhân chặn nhanh chóng.
+Lưu ý khi đọc log: pfSense hiển thị log theo thứ tự cũ → mới (cuộn xuống cuối trang mới thấy log mới nhất, không phải đầu trang); nhớ F5 refresh sau khi tạo traffic mới vì trang không tự cập nhật.
