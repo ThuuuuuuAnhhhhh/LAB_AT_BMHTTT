@@ -3,7 +3,8 @@
 Mon hoc: An toan va bao mat he thong thong tin
 Sinh vien: Ma Thi Thu Anh - 1150070001 - 11DH_TMDT 
 
-Tóm tắt toàn bộ:  ĐÃ HOÀN THÀNH 3 TÌNH HUỐNG(1-2-3) ; ĐÃ HOÀN THÀNH 2 TÌNH HUỐNG 4-5 (BỔ SUNG FILE MỚI LAB5P2)
+Tóm tắt toàn bộ:  ĐÃ HOÀN THÀNH 3 TÌNH HUỐNG(1-2-3) ; ĐÃ HOÀN THÀNH 2 TÌNH HUỐNG 4-5 (BỔ SUNG FILE MỚI LAB5P2); 
+----> em không cập nhật vào dc 1 file word nên thầy ơi em xin phép để file thứ 2 thầy đừng trả lại bài nha thầy , em làm cực lắm T-T
 
 YOUTUBE : ĐÃ CẬP NHẬT VÀO WORD - HẲN 2 PHẦN LUÔN 
 
